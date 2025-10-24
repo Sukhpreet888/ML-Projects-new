@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Retention Predictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+        }
+        .form-input, .form-select {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.2s ease-in-out;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        .submit-btn {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .result-box {
+            border-radius: 0.75rem;
+        }
+        .logo-icon {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="container mx-auto card p-8 md:p-12">
+        <div class="text-center mb-8">
+            <i class="fas fa-chart-line text-5xl logo-icon mb-4"></i>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Employee Retention Predictor</h1>
+            <p class="mt-2 text-gray-600">Enter employee data to predict if they are likely to stay or leave the company.</p>
+        </div>
+
+        <form id="predictionForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Satisfaction Level -->
+            <div class="flex flex-col">
+                <label for="satisfaction_level" class="text-gray-700 font-semibold mb-2">Satisfaction Level (0.0 - 1.0)</label>
+                <input type="number" step="0.01" id="satisfaction_level" name="satisfaction_level" class="form-input" required min="0" max="1">
+            </div>
+
+            <!-- Last Evaluation -->
+            <div class="flex flex-col">
+                <label for="last_evaluation" class="text-gray-700 font-semibold mb-2">Last Evaluation (0.0 - 1.0)</label>
+                <input type="number" step="0.01" id="last_evaluation" name="last_evaluation" class="form-input" required min="0" max="1">
+            </div>
+
+            <!-- Number of Projects -->
+            <div class="flex flex-col">
+                <label for="number_project" class="text-gray-700 font-semibold mb-2">Number of Projects</label>
+                <input type="number" id="number_project" name="number_project" class="form-input" required min="1">
+            </div>
+
+            <!-- Average Monthly Hours -->
+            <div class="flex flex-col">
+                <label for="average_monthly_hours" class="text-gray-700 font-semibold mb-2">Average Monthly Hours</label>
+                <input type="number" id="average_monthly_hours" name="average_monthly_hours" class="form-input" required min="1">
+            </div>
+            
+            <!-- Time Spent in Company -->
+            <div class="flex flex-col">
+                <label for="time_spend_company" class="text-gray-700 font-semibold mb-2">Time Spent in Company (years)</label>
+                <input type="number" id="time_spend_company" name="time_spend_company" class="form-input" required min="1">
+            </div>
+            
+            <!-- Work Accident -->
+            <div class="flex flex-col">
+                <label for="work_accident" class="text-gray-700 font-semibold mb-2">Work Accident</label>
+                <select id="work_accident" name="work_accident" class="form-select" required>
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                </select>
+            </div>
+            
+            <!-- Promotion in Last 5 Years -->
+            <div class="flex flex-col">
+                <label for="promotion_last_5years" class="text-gray-700 font-semibold mb-2">Promotion in Last 5 Years</label>
+                <select id="promotion_last_5years" name="promotion_last_5years" class="form-select" required>
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                </select>
+            </div>
+            
+            <!-- Salary -->
+            <div class="flex flex-col">
+                <label for="salary" class="text-gray-700 font-semibold mb-2">Salary</label>
+                <select id="salary" name="salary" class="form-select" required>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            
+   
+            <div class="md:col-span-2 mt-4 text-center">
+                <button type="submit" class="submit-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500">
+                    Predict Employee Retention
+                </button>
+            </div>
+        </form>
+
+        <div id="result" class="mt-8 text-center p-6 result-box bg-gray-50 hidden">
+            <h3 class="text-2xl font-bold text-gray-800">Prediction:</h3>
+            <p id="predictionText" class="text-xl font-medium mt-2"></p>
+        </div>
+
+        <div id="error" class="mt-8 p-4 bg-red-100 text-red-700 border border-red-400 rounded-lg hidden">
+            <p id="errorText"></p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('predictionForm');
+        const resultDiv = document.getElementById('result');
+        const predictionText = document.getElementById('predictionText');
+        const errorDiv = document.getElementById('error');
+        const errorText = document.getElementById('errorText');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            resultDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(data).toString(),
+                });
+
+                if (!response.ok) {
+                    const errorJson = await response.json();
+                    throw new Error(errorJson.error || 'Something went wrong.');
+                }
+
+                const result = await response.json();
+                
+                predictionText.textContent = `This employee is ${result.prediction}.`;
+                
+                // Color the text based on the prediction
+                if (result.prediction === 'likely to leave') {
+                    predictionText.classList.remove('text-green-600');
+                    predictionText.classList.add('text-red-600');
+                } else {
+                    predictionText.classList.remove('text-red-600');
+                    predictionText.classList.add('text-green-600');
+                }
+
+                resultDiv.classList.remove('hidden');
+
+            } catch (error) {
+                errorText.textContent = `Error: ${error.message}`;
+                errorDiv.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
