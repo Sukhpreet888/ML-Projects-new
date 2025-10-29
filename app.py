@@ -1,17 +1,31 @@
+import os
+import pickle
 from flask import Flask, request, jsonify, render_template
 import traceback
 import pandas as pd
-import pickle
+
+app = Flask(__name__)
 
 # =============================
 # Load model & columns
 # =============================
 
-MODEL_PATH = r"D:\Data Science Files\Practice\ML end to end practice project\decision_tree_model.pkl"
+# Always look for model in same folder as app.py
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "decision_tree_model.pkl")
 
-with open(MODEL_PATH, "rb") as f:
-    model = pickle.load(f)
+# ✅ Load model safely
+try:
+    with open(MODEL_PATH, "rb") as f:
+        model = pickle.load(f)
+    print(f"✅ Model loaded successfully from {MODEL_PATH}")
+except FileNotFoundError:
+    print(f"❌ Model file not found at: {MODEL_PATH}")
+    model = None
+except Exception as e:
+    print(f"❌ Error loading model: {e}")
+    model = None
 
+# Columns used for model input
 model_columns = [
     'satisfaction_level',
     'last_evaluation',
@@ -23,19 +37,19 @@ model_columns = [
     'high'
 ]
 
-app = Flask(__name__)
-
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# =============================
-# Prediction Endpoint
-# =============================
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
+        if model is None:
+            return jsonify({"error": "Model not loaded. Please check your MODEL_PATH."})
+
         json_ = request.json
+        if not json_:
+            return jsonify({"error": "No input data received."})
 
         query_df = pd.DataFrame([json_])
 
@@ -44,21 +58,13 @@ def predict():
                 query_df[col] = 0
 
         query_df = query_df[model_columns]
-
         prediction = model.predict(query_df)[0]
-
         result = "Employee likely to LEAVE" if prediction == 1 else "Employee likely to STAY"
 
-        return jsonify({
-            "prediction": int(prediction),
-            "result": result
-        })
+        return jsonify({"prediction": int(prediction), "result": result})
 
     except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "trace": traceback.format_exc()
-        })
+        return jsonify({"error": str(e), "trace": traceback.format_exc()})
 
 if __name__ == "__main__":
     app.run(debug=True)
